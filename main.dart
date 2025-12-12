@@ -10,71 +10,71 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Samsung Style Calculator',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: const MyHomePage(title: 'Samsung Calculator'),
+      debugShowCheckedModeBanner: false,
+      home: const CalculatorPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class CalculatorPage extends StatefulWidget {
+  const CalculatorPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<CalculatorPage> createState() => _CalculatorPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  String _output = '0';  // Output of the calculation
-  double _firstNum = 0;  // First operand
-  String _operator = ''; // Operator (+, -, *, /)
+class _CalculatorPageState extends State<CalculatorPage> {
+  String display = "0";
+  double firstNum = 0;
+  String operator = "";
 
-  // Handle button presses
-  void _onButtonPressed(String value) {
+  // ปุ่มทั้งหมดเรียงแบบเดียวกับรูป
+  final List<String> buttons = [
+    "7", "8", "9", "+",
+    "4", "5", "6", "-",
+    "1", "2", "3", "*",
+    "0", "C", "=", "/",
+  ];
+
+  void onPressed(String value) {
     setState(() {
-      if (value == 'C') {
-        _output = '0'; // Clear screen
-        _firstNum = 0;
-        _operator = '';
-      } else if (value == '=') {
-        double secondNum = double.tryParse(_output) ?? 0;
-        switch (_operator) {
-          case '+':
-            _output = (_firstNum + secondNum).toString();
-            break;
-          case '-':
-            _output = (_firstNum - secondNum).toString();
-            break;
-          case '*':
-            _output = (_firstNum * secondNum).toString();
-            break;
-          case '/':
-            if (secondNum != 0) {
-              _output = (_firstNum / secondNum).toString();
-            } else {
-              _output = 'Error'; // Handle division by zero
-            }
-            break;
-          default:
+      if (value == "C") {
+        display = "0";
+        firstNum = 0;
+        operator = "";
+        return;
+      }
+
+      if (value == "+" || value == "-" || value == "*" || value == "/") {
+        firstNum = double.tryParse(display) ?? 0;
+        operator = value;
+        display = "0";
+        return;
+      }
+
+      if (value == "=") {
+        double secondNum = double.tryParse(display) ?? 0;
+        double result = 0;
+
+        switch (operator) {
+          case "+": result = firstNum + secondNum; break;
+          case "-": result = firstNum - secondNum; break;
+          case "*": result = firstNum * secondNum; break;
+          case "/":
+            result = secondNum != 0 ? firstNum / secondNum : double.nan;
             break;
         }
-        _operator = '';  // Clear operator after calculation
-      } else if (value == '+' || value == '-' || value == '*' || value == '/') {
-        _firstNum = double.tryParse(_output) ?? 0;
-        _operator = value;
-        _output = '0'; // Prepare for next number input
+
+        display = (result.isNaN) ? "Error" : result.toString();
+        operator = "";
+        return;
+      }
+
+      // ถ้าเป็นตัวเลข
+      if (display == "0") {
+        display = value;
       } else {
-        // Handle digit input
-        if (_output == '0') {
-          _output = value; // Replace '0' with the pressed digit
-        } else {
-          _output += value; // Append digit to the current output
-        }
+        display += value;
       }
     });
   }
@@ -82,81 +82,65 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        backgroundColor: Colors.blueAccent,
-      ),
+      backgroundColor: const Color(0xFFF7EFFF),
       body: SafeArea(
         child: Column(
           children: [
-            // Display output (main screen)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                _output,
-                style: const TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+            const SizedBox(height: 20),
+            const Text(
+              "Calculator",
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              display,
+              style: const TextStyle(
+                fontSize: 60,
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            // Grid layout for buttons
+            const SizedBox(height: 20),
+
             Expanded(
               child: GridView.builder(
-                shrinkWrap: true,
+                padding: const EdgeInsets.all(20),
+                itemCount: buttons.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
-                  crossAxisSpacing: 10.0,
-                  mainAxisSpacing: 10.0,
+                  crossAxisSpacing: 15,
+                  mainAxisSpacing: 15,
                 ),
-                itemCount: 20,
                 itemBuilder: (context, index) {
-                  String buttonText;
-                  if (index < 9) {
-                    buttonText = (index + 1).toString(); // 1-9
-                  } else if (index == 9) {
-                    buttonText = '0'; // 0
-                  } else {
-                    switch (index) {
-                      case 10:
-                        buttonText = '+';
-                        break;
-                      case 11:
-                        buttonText = '-';
-                        break;
-                      case 12:
-                        buttonText = '*';
-                        break;
-                      case 13:
-                        buttonText = '/';
-                        break;
-                      case 14:
-                        buttonText = 'C';
-                        break;
-                      case 15:
-                        buttonText = '=';
-                        break;
-                      default:
-                        buttonText = '';
-                        break;
-                    }
+                  String btn = buttons[index];
+
+                  Color bgColor = const Color(0xFFDCCBFF); // สีม่วงอ่อน
+                  Color textColor = Colors.black;
+
+                  if (btn == "C") {
+                    bgColor = const Color(0xFF8F63FF); // ปุ่มสีม่วงเข้ม
+                    textColor = Colors.white;
                   }
-                  return SizedBox(
-                    height: 80,
-                    child: ElevatedButton(
-                      onPressed: () => _onButtonPressed(buttonText),
-                      style: ElevatedButton.styleFrom(
-                        shape: CircleBorder(),
-      
+
+                  if (btn == "=") {
+                    bgColor = Colors.white;
+                  }
+
+                  return ElevatedButton(
+                    onPressed: () => onPressed(btn),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: bgColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
                       ),
-                      child: Text(
-                        buttonText,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                      shadowColor: Colors.transparent,
+                    ),
+                    child: Text(
+                      btn,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
                       ),
                     ),
                   );
